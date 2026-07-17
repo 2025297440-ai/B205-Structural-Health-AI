@@ -4,8 +4,10 @@
 """
 
 from datetime import date, timedelta
+from pathlib import Path
 
 import matplotlib.pyplot as plt
+from matplotlib import font_manager
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -19,13 +21,59 @@ st.set_page_config(
 
 
 def set_chinese_font():
-    """设置常见中文字体，避免图表中的中文显示为方框。"""
-    plt.rcParams["font.sans-serif"] = [
+    """自动加载中英文字体，兼容 Windows 和 Streamlit Cloud（Linux）。"""
+    # 优先级从云端 Linux 常见字体到 Windows 常见字体
+    preferred_fonts = [
+        "Noto Sans CJK SC",
+        "Noto Sans CJK JP",  # Noto 的 TTC 字体有时以 JP 名称注册，但包含中文字形
+        "Source Han Sans SC",
+        "Source Han Sans CN",
         "Microsoft YaHei",
         "SimHei",
         "Arial Unicode MS",
-        "DejaVu Sans",
     ]
+
+    # 主动注册常见字体文件。也支持将字体放入项目的 fonts 目录后自动加载。
+    project_dir = Path(__file__).resolve().parent
+    candidate_paths = [
+        project_dir / "fonts" / "NotoSansCJKsc-Regular.otf",
+        project_dir / "fonts" / "NotoSansCJK-Regular.ttc",
+        Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"),
+        Path("/usr/share/fonts/opentype/noto/NotoSansCJKsc-Regular.otf"),
+        Path("/usr/share/fonts/truetype/noto/NotoSansCJKsc-Regular.otf"),
+        Path("/usr/share/fonts/opentype/noto/NotoSansCJKsc-Regular.otf"),
+        Path("C:/Windows/Fonts/msyh.ttc"),
+        Path("C:/Windows/Fonts/simhei.ttf"),
+    ]
+
+    for font_path in candidate_paths:
+        if font_path.exists():
+            try:
+                font_manager.fontManager.addfont(str(font_path))
+            except (OSError, RuntimeError, ValueError, AttributeError):
+                # 某些系统不支持读取特定字体集合，继续尝试其他字体
+                pass
+
+    available_names = {font.name for font in font_manager.fontManager.ttflist}
+    selected_font = next(
+        (font_name for font_name in preferred_fonts if font_name in available_names),
+        None,
+    )
+
+    # 兼容同一字体在不同 Linux 发行版中的名称差异
+    if selected_font is None:
+        chinese_font_keywords = ("Noto Sans CJK", "Source Han Sans", "YaHei", "SimHei")
+        selected_font = next(
+            (
+                font_name
+                for font_name in sorted(available_names)
+                if any(keyword in font_name for keyword in chinese_font_keywords)
+            ),
+            "DejaVu Sans",
+        )
+
+    plt.rcParams["font.family"] = "sans-serif"
+    plt.rcParams["font.sans-serif"] = [selected_font, *preferred_fonts, "DejaVu Sans"]
     plt.rcParams["axes.unicode_minus"] = False
 
 
