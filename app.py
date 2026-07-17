@@ -19,62 +19,63 @@ st.set_page_config(
     layout="wide",
 )
 
+# 绘图函数共用的中文字体对象；启动后由 set_chinese_font() 更新
+CHINESE_FONT_PROPERTIES = font_manager.FontProperties()
+
 
 def set_chinese_font():
-    """自动加载中英文字体，兼容 Windows 和 Streamlit Cloud（Linux）。"""
-    # 优先级从云端 Linux 常见字体到 Windows 常见字体
+    """优先加载项目内中文字体，缺失时安全回退到系统字体。"""
+    global CHINESE_FONT_PROPERTIES
+
+    # 使用 __file__ 构建绝对路径，兼容本地 Windows 和 Streamlit Cloud
+    project_font_path = (
+        Path(__file__).resolve().parent / "fonts" / "NotoSansSC-Regular.ttf"
+    )
+
+    if project_font_path.exists():
+        try:
+            font_manager.fontManager.addfont(str(project_font_path))
+            CHINESE_FONT_PROPERTIES = font_manager.FontProperties(
+                fname=str(project_font_path)
+            )
+            font_name = CHINESE_FONT_PROPERTIES.get_name()
+            plt.rcParams["font.family"] = font_name
+            plt.rcParams["font.sans-serif"] = [font_name]
+            plt.rcParams["axes.unicode_minus"] = False
+            return CHINESE_FONT_PROPERTIES
+        except (OSError, RuntimeError, ValueError, AttributeError):
+            # 字体文件不可读时继续执行系统字体回退，避免网页崩溃
+            pass
+
+    # 安全回退：选择当前系统中真实存在的中文字体文件
     preferred_fonts = [
         "Noto Sans CJK SC",
-        "Noto Sans CJK JP",  # Noto 的 TTC 字体有时以 JP 名称注册，但包含中文字形
+        "Noto Sans CJK JP",
         "Source Han Sans SC",
         "Source Han Sans CN",
         "Microsoft YaHei",
         "SimHei",
         "Arial Unicode MS",
     ]
-
-    # 主动注册常见字体文件。也支持将字体放入项目的 fonts 目录后自动加载。
-    project_dir = Path(__file__).resolve().parent
-    candidate_paths = [
-        project_dir / "fonts" / "NotoSansCJKsc-Regular.otf",
-        project_dir / "fonts" / "NotoSansCJK-Regular.ttc",
-        Path("/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc"),
-        Path("/usr/share/fonts/opentype/noto/NotoSansCJKsc-Regular.otf"),
-        Path("/usr/share/fonts/truetype/noto/NotoSansCJKsc-Regular.otf"),
-        Path("/usr/share/fonts/opentype/noto/NotoSansCJKsc-Regular.otf"),
-        Path("C:/Windows/Fonts/msyh.ttc"),
-        Path("C:/Windows/Fonts/simhei.ttf"),
-    ]
-
-    for font_path in candidate_paths:
-        if font_path.exists():
-            try:
-                font_manager.fontManager.addfont(str(font_path))
-            except (OSError, RuntimeError, ValueError, AttributeError):
-                # 某些系统不支持读取特定字体集合，继续尝试其他字体
-                pass
-
-    available_names = {font.name for font in font_manager.fontManager.ttflist}
-    selected_font = next(
-        (font_name for font_name in preferred_fonts if font_name in available_names),
+    system_font = next(
+        (
+            font
+            for preferred_name in preferred_fonts
+            for font in font_manager.fontManager.ttflist
+            if font.name == preferred_name
+        ),
         None,
     )
 
-    # 兼容同一字体在不同 Linux 发行版中的名称差异
-    if selected_font is None:
-        chinese_font_keywords = ("Noto Sans CJK", "Source Han Sans", "YaHei", "SimHei")
-        selected_font = next(
-            (
-                font_name
-                for font_name in sorted(available_names)
-                if any(keyword in font_name for keyword in chinese_font_keywords)
-            ),
-            "DejaVu Sans",
-        )
+    if system_font is not None:
+        CHINESE_FONT_PROPERTIES = font_manager.FontProperties(fname=system_font.fname)
+        plt.rcParams["font.family"] = system_font.name
+        plt.rcParams["font.sans-serif"] = [system_font.name, "DejaVu Sans"]
+    else:
+        CHINESE_FONT_PROPERTIES = font_manager.FontProperties()
 
-    plt.rcParams["font.family"] = "sans-serif"
-    plt.rcParams["font.sans-serif"] = [selected_font, *preferred_fonts, "DejaVu Sans"]
     plt.rcParams["axes.unicode_minus"] = False
+    return CHINESE_FONT_PROPERTIES
 
 
 @st.cache_data
@@ -225,17 +226,21 @@ def draw_health_chart(dates, health):
         fontsize=10,
         fontweight="bold",
         color="#C0392B",
+        fontproperties=CHINESE_FONT_PROPERTIES,
         arrowprops={"arrowstyle": "->", "color": "#C0392B"},
     )
 
     ax.axhline(80, color="#F1C40F", linestyle="--", alpha=0.8, label="关注线（80分）")
-    ax.set_title(f"未来180天健康趋势预测（当前健康指数：{current_health:.1f}分）")
-    ax.set_xlabel("时间")
-    ax.set_ylabel("健康指数")
+    ax.set_title(
+        f"未来180天健康趋势预测（当前健康指数：{current_health:.1f}分）",
+        fontproperties=CHINESE_FONT_PROPERTIES,
+    )
+    ax.set_xlabel("时间", fontproperties=CHINESE_FONT_PROPERTIES)
+    ax.set_ylabel("健康指数", fontproperties=CHINESE_FONT_PROPERTIES)
     # 固定坐标范围，确保不同模拟状态的曲线高低位置可以直接比较
     ax.set_ylim(0, 100)
     ax.grid(alpha=0.25)
-    ax.legend()
+    ax.legend(prop=CHINESE_FONT_PROPERTIES)
     fig.autofmt_xdate()
     fig.tight_layout()
     return fig
@@ -250,13 +255,16 @@ def draw_counterfactual_chart(dates, scenarios):
         ax.plot(dates, health, linewidth=2.5, label=name, color=color)
 
     current_health = float(next(iter(scenarios.values()))[0])
-    ax.set_title(f"未来180天反事实推演（当前健康指数：{current_health:.1f}分）")
-    ax.set_xlabel("时间")
-    ax.set_ylabel("健康指数")
+    ax.set_title(
+        f"未来180天反事实推演（当前健康指数：{current_health:.1f}分）",
+        fontproperties=CHINESE_FONT_PROPERTIES,
+    )
+    ax.set_xlabel("时间", fontproperties=CHINESE_FONT_PROPERTIES)
+    ax.set_ylabel("健康指数", fontproperties=CHINESE_FONT_PROPERTIES)
     # 与健康趋势图使用相同的固定范围，避免自动缩放造成视觉误差
     ax.set_ylim(0, 100)
     ax.grid(alpha=0.25)
-    ax.legend()
+    ax.legend(prop=CHINESE_FONT_PROPERTIES)
     fig.autofmt_xdate()
     fig.tight_layout()
     return fig
