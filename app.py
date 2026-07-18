@@ -8,6 +8,7 @@ from pathlib import Path
 
 import matplotlib.pyplot as plt
 from matplotlib import font_manager
+from matplotlib.patches import Rectangle
 import numpy as np
 import pandas as pd
 import streamlit as st
@@ -267,6 +268,171 @@ def draw_counterfactual_chart(dates, scenarios):
     ax.legend(prop=CHINESE_FONT_PROPERTIES)
     fig.autofmt_xdate()
     fig.tight_layout()
+    return fig
+
+
+def draw_digital_twin_section():
+    """绘制教学楼二层B205梁的轻量化数字孪生定位剖面。"""
+    fig, ax = plt.subplots(figsize=(9, 4.8))
+    fig.patch.set_facecolor("white")
+    ax.set_facecolor("white")
+    ax.set_xlim(0, 12)
+    ax.set_ylim(0, 8.2)
+    ax.axis("off")
+
+    # 建筑剖面主体：一层、二层、三层按真实空间关系自下而上排列
+    building_left = 2.0
+    building_width = 7.2
+    floor_bottoms = [1.1, 3.0, 4.9]
+    floor_labels = ["一层", "二层", "三层"]
+
+    for floor_bottom, floor_label in zip(floor_bottoms, floor_labels):
+        ax.add_patch(
+            Rectangle(
+                (building_left, floor_bottom),
+                building_width,
+                1.7,
+                facecolor="#F4F7FA",
+                edgecolor="#D5E0E8",
+                linewidth=1.0,
+            )
+        )
+        ax.text(
+            1.45,
+            floor_bottom + 0.85,
+            floor_label,
+            ha="center",
+            va="center",
+            fontsize=12,
+            fontweight="bold",
+            color="#314E63",
+            fontproperties=CHINESE_FONT_PROPERTIES,
+        )
+
+    # 楼板和屋面
+    for slab_y in [1.0, 2.9, 4.8, 6.7]:
+        ax.add_patch(
+            Rectangle(
+                (building_left - 0.15, slab_y),
+                building_width + 0.3,
+                0.13,
+                facecolor="#71899B",
+                edgecolor="none",
+            )
+        )
+
+    # 规则柱网，体现建筑空间和结构关系
+    column_x_positions = [2.05, 4.4, 6.75, 9.05]
+    for column_x in column_x_positions:
+        ax.add_patch(
+            Rectangle(
+                (column_x, 1.1),
+                0.13,
+                5.6,
+                facecolor="#AABBC7",
+                edgecolor="none",
+            )
+        )
+
+    # 周边普通梁采用浅灰色
+    for beam_y in [2.65, 4.55, 6.45]:
+        ax.add_patch(
+            Rectangle(
+                (2.18, beam_y),
+                6.87,
+                0.16,
+                facecolor="#C4D0D9",
+                edgecolor="#9FB1BE",
+                linewidth=0.7,
+            )
+        )
+
+    # B205位于二层梁结构位置，黄色高亮并增加选中边界
+    ax.add_patch(
+        Rectangle(
+            (4.4, 3.15),
+            2.35,
+            0.55,
+            facecolor="none",
+            edgecolor="#D39A00",
+            linewidth=1.5,
+            linestyle="--",
+        )
+    )
+    ax.add_patch(
+        Rectangle(
+            (4.52, 3.31),
+            2.1,
+            0.23,
+            facecolor="#F4B400",
+            edgecolor="#806000",
+            linewidth=1.2,
+        )
+    )
+    ax.scatter(
+        [4.7, 6.45],
+        [3.425, 3.425],
+        s=18,
+        color="#FFF1A8",
+        edgecolors="#806000",
+        linewidths=0.8,
+        zorder=5,
+    )
+    ax.text(
+        5.57,
+        3.82,
+        "B205梁",
+        ha="center",
+        va="bottom",
+        fontsize=12,
+        fontweight="bold",
+        color="#624A00",
+        fontproperties=CHINESE_FONT_PROPERTIES,
+    )
+
+    # 定位引线和当前风险状态
+    ax.annotate(
+        "构件定位：教学楼二层\n当前状态：黄色关注",
+        xy=(6.62, 3.43),
+        xytext=(9.75, 4.1),
+        ha="left",
+        va="center",
+        fontsize=10.5,
+        color="#3E5261",
+        fontproperties=CHINESE_FONT_PROPERTIES,
+        arrowprops={"arrowstyle": "->", "color": "#D39A00", "linewidth": 1.6},
+        bbox={"boxstyle": "round,pad=0.45", "facecolor": "#FFF8DD", "edgecolor": "#D8B74C"},
+    )
+
+    # 状态图例
+    legend_items = [
+        ("#2E7D32", "绿色：安全区域"),
+        ("#F4B400", "黄色：关注区域"),
+        ("#C62828", "红色：风险区域"),
+    ]
+    legend_x = [2.1, 5.0, 7.9]
+    for x_position, (color, label) in zip(legend_x, legend_items):
+        ax.scatter(x_position, 0.42, s=55, color=color, zorder=4)
+        ax.text(
+            x_position + 0.2,
+            0.42,
+            label,
+            ha="left",
+            va="center",
+            fontsize=9.5,
+            color="#405566",
+            fontproperties=CHINESE_FONT_PROPERTIES,
+        )
+
+    ax.set_title(
+        "教学楼二层B205梁数字孪生对象定位",
+        fontsize=14,
+        fontweight="bold",
+        color="#173B5E",
+        pad=10,
+        fontproperties=CHINESE_FONT_PROPERTIES,
+    )
+    fig.tight_layout(pad=0.8)
     return fig
 
 
@@ -633,6 +799,11 @@ def main():
 该视图将AI分析结果定位到教学楼二层的具体梁构件。
         """
     )
+
+    # 使用 Matplotlib 可靠渲染建筑剖面，替换云端无法显示的内嵌SVG
+    twin_figure = draw_digital_twin_section()
+    twin_diagram_placeholder.pyplot(twin_figure, use_container_width=True)
+    plt.close(twin_figure)
 
     st.header("5. 📈 健康趋势预测")
     future_dates, health = predict_health_trend(
