@@ -406,6 +406,12 @@ def main():
     overview_col3.metric("应用场景", "教学楼健康监测")
     overview_status_placeholder = overview_col4.empty()
 
+    # 数字孪生对象展示位置：稍后根据当前模拟风险状态填充颜色
+    st.markdown("### 🏢 B205数字孪生对象")
+    twin_col1, twin_col2 = st.columns([2, 1])
+    twin_diagram_placeholder = twin_col1.empty()
+    twin_info_placeholder = twin_col2.empty()
+
     st.markdown("**系统工作流程**")
     st.markdown(
         """
@@ -500,6 +506,66 @@ def main():
         "当前状态",
         f"{current_health:.1f}%",
         risk_level,
+    )
+
+    # 将风险状态映射为构件颜色，仅用于数字孪生对象展示
+    if "绿色" in risk_level:
+        beam_color = "#2E7D32"
+    elif "黄色" in risk_level:
+        beam_color = "#F4B400"
+    else:
+        beam_color = "#C62828"
+
+    twin_diagram_placeholder.markdown(
+        f"""
+        <div style="background:#ffffff;border:1px solid #d7e3f1;border-radius:8px;
+                    padding:10px;box-shadow:0 2px 8px rgba(31,78,121,0.06);">
+        <svg viewBox="0 0 560 285" width="100%" role="img"
+             aria-label="教学楼二层B205梁数字孪生示意图">
+          <rect x="72" y="25" width="365" height="205" rx="5"
+                fill="#f8fbfe" stroke="#315f83" stroke-width="4"/>
+          <rect x="76" y="29" width="357" height="63" fill="#edf7f0"/>
+          <rect x="76" y="94" width="357" height="64" fill="#fff8df"/>
+          <rect x="76" y="160" width="357" height="66" fill="#edf7f0"/>
+          <line x1="72" y1="93" x2="437" y2="93" stroke="#7b96ab" stroke-width="3"/>
+          <line x1="72" y1="159" x2="437" y2="159" stroke="#7b96ab" stroke-width="3"/>
+          <line x1="150" y1="25" x2="150" y2="230" stroke="#a4b8c8" stroke-width="3"/>
+          <line x1="359" y1="25" x2="359" y2="230" stroke="#a4b8c8" stroke-width="3"/>
+
+          <text x="88" y="64" font-size="17" fill="#45677f">教学楼三层</text>
+          <text x="88" y="127" font-size="18" font-weight="700" fill="#173b5e">教学楼二层</text>
+          <text x="88" y="199" font-size="17" fill="#45677f">教学楼一层</text>
+
+          <rect x="151" y="124" width="207" height="18" rx="4"
+                fill="{beam_color}" stroke="#795900" stroke-width="2"/>
+          <text x="218" y="119" font-size="17" font-weight="700" fill="#173b5e">B205梁</text>
+          <line x1="359" y1="133" x2="485" y2="105" stroke="{beam_color}" stroke-width="3"/>
+          <circle cx="359" cy="133" r="6" fill="{beam_color}"/>
+          <text x="450" y="82" font-size="16" fill="#526b7e">当前状态</text>
+          <text x="450" y="105" font-size="17" font-weight="700" fill="{beam_color}">{risk_level}</text>
+
+          <circle cx="100" cy="258" r="7" fill="#2E7D32"/>
+          <text x="114" y="264" font-size="15" fill="#4b6172">绿色：安全区域</text>
+          <circle cx="265" cy="258" r="7" fill="#F4B400"/>
+          <text x="279" y="264" font-size="15" fill="#4b6172">黄色：关注区域</text>
+          <circle cx="430" cy="258" r="7" fill="#C62828"/>
+          <text x="444" y="264" font-size="15" fill="#4b6172">红色：风险区域</text>
+        </svg>
+        </div>
+        """,
+        unsafe_allow_html=True,
+    )
+    twin_info_placeholder.info(
+        f"""
+**数字孪生构件信息**
+
+**构件编号：** B-2-05  
+**类型：** 钢筋混凝土梁  
+**位置：** 教学楼二层  
+**当前状态：** {risk_level}
+
+AI分析结果已关联至具体建筑位置与梁构件对象。
+        """
     )
 
     st.header("5. 📈 健康趋势预测")
@@ -605,6 +671,49 @@ def main():
         }
     )
     st.dataframe(evaluation_data, use_container_width=True, hide_index=True)
+
+    # AI风险解释与证据链仅用于展示，不参与已有模型计算
+    with st.expander("🤖 AI风险解释与证据链", expanded=True):
+        st.subheader("第一部分｜数据来源")
+        source_col1, source_col2 = st.columns(2)
+        source_col1.info(
+            "**✓ 结构健康监测数据**\n\n获取构件受力状态变化信息"
+        )
+        source_col2.info(
+            "**✓ 裂缝及损伤变化数据**\n\n识别损伤发展趋势"
+        )
+        source_col3, source_col4 = st.columns(2)
+        source_col3.info(
+            "**✓ BIM构件属性**\n\n提供材料、尺寸、服役信息"
+        )
+        source_col4.info(
+            "**✓ 历史工程案例**\n\n辅助风险模式匹配"
+        )
+
+        st.divider()
+        st.subheader("第二部分｜AI分析过程")
+        process_col1, process_col2, process_col3 = st.columns(3)
+        process_col1.markdown(
+            "**1. 状态识别**\n\n根据当前监测数据判断构件健康状态。"
+        )
+        process_col2.markdown(
+            "**2. 趋势预测**\n\n分析未来180天健康变化趋势。"
+        )
+        process_col3.markdown(
+            "**3. 风险关联分析**\n\n结合多源信息识别潜在风险因素。"
+        )
+
+        st.divider()
+        st.subheader("第三部分｜风险判断与工程建议")
+        st.warning(f"**当前风险：** {risk_level}")
+        st.markdown(
+            """
+**主要原因：** 存在持续退化趋势，需要关注后续变化。
+
+**工程建议：** 建议开展针对性检查，并结合实际情况制定维护措施。
+            """
+        )
+        st.success("AI提供辅助决策依据，最终维修方案由工程人员确认。")
 
     # 以下模块只解释已有数据与推演结果，不参与健康指数和方案计算
     with st.expander("🤖 AI风险解释与决策依据", expanded=True):
