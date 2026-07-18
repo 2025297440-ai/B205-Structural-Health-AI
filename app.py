@@ -323,6 +323,30 @@ def main():
             background-color: #f5f8fc;
             font-family: "Microsoft YaHei", "Segoe UI", Arial, sans-serif;
             color: #24384a;
+            color-scheme: light;
+        }
+        /* 全局正文与组件文字固定为深色，避免云端主题产生白字 */
+        .stApp p,
+        .stApp li,
+        .stApp label,
+        .stApp small,
+        .stApp [data-testid="stMarkdownContainer"],
+        .stApp [data-testid="stWidgetLabel"],
+        .stApp [data-testid="stExpander"] summary,
+        .stApp [data-testid="stAlert"] {
+            color: #2f3e4c !important;
+        }
+        .stApp [data-testid="stExpander"] summary p,
+        .stApp [data-testid="stAlert"] p,
+        .stApp [data-testid="stAlert"] li,
+        .stApp [data-testid="stMetricDelta"] {
+            color: #40576a !important;
+        }
+        .stApp input,
+        .stApp textarea,
+        .stApp select {
+            color: #24384a !important;
+            background-color: #ffffff !important;
         }
         /* 页面主标题：突出平台名称 */
         h1 {
@@ -406,8 +430,8 @@ def main():
     overview_col3.metric("应用场景", "教学楼健康监测")
     overview_status_placeholder = overview_col4.empty()
 
-    # 数字孪生对象展示位置：稍后根据当前模拟风险状态填充颜色
-    st.markdown("### 🏢 B205数字孪生对象")
+    # 数字孪生对象展示位置
+    st.markdown("### B205数字孪生对象定位")
     twin_col1, twin_col2 = st.columns([2, 1])
     twin_diagram_placeholder = twin_col1.empty()
     twin_info_placeholder = twin_col2.empty()
@@ -508,63 +532,105 @@ def main():
         risk_level,
     )
 
-    # 将风险状态映射为构件颜色，仅用于数字孪生对象展示
-    if "绿色" in risk_level:
-        beam_color = "#2E7D32"
-    elif "黄色" in risk_level:
-        beam_color = "#F4B400"
-    else:
-        beam_color = "#C62828"
-
+    # 当前数字孪生基准状态：B205梁为黄色关注构件
     twin_diagram_placeholder.markdown(
-        f"""
+        """
         <div style="background:#ffffff;border:1px solid #d7e3f1;border-radius:8px;
-                    padding:10px;box-shadow:0 2px 8px rgba(31,78,121,0.06);">
-        <svg viewBox="0 0 560 285" width="100%" role="img"
-             aria-label="教学楼二层B205梁数字孪生示意图">
-          <rect x="72" y="25" width="365" height="205" rx="5"
-                fill="#f8fbfe" stroke="#315f83" stroke-width="4"/>
-          <rect x="76" y="29" width="357" height="63" fill="#edf7f0"/>
-          <rect x="76" y="94" width="357" height="64" fill="#fff8df"/>
-          <rect x="76" y="160" width="357" height="66" fill="#edf7f0"/>
-          <line x1="72" y1="93" x2="437" y2="93" stroke="#7b96ab" stroke-width="3"/>
-          <line x1="72" y1="159" x2="437" y2="159" stroke="#7b96ab" stroke-width="3"/>
-          <line x1="150" y1="25" x2="150" y2="230" stroke="#a4b8c8" stroke-width="3"/>
-          <line x1="359" y1="25" x2="359" y2="230" stroke="#a4b8c8" stroke-width="3"/>
+                    padding:12px;box-shadow:0 2px 8px rgba(31,78,121,0.06);">
+        <svg viewBox="0 0 760 410" width="100%" role="img"
+             aria-label="教学楼二层B205梁数字孪生对象定位视图"
+             style="font-family:'Microsoft YaHei','Segoe UI',Arial,sans-serif;">
+          <!-- 技术视图标题栏 -->
+          <rect x="12" y="12" width="736" height="43" rx="5"
+                fill="#eaf3fb" stroke="#bfd5e6"/>
+          <text x="30" y="40" font-size="19" font-weight="700" fill="#173b5e">
+            教学楼二层 B205梁｜数字孪生对象定位
+          </text>
+          <text x="630" y="39" font-size="13" fill="#60788b">SECTION VIEW</text>
 
-          <text x="88" y="64" font-size="17" fill="#45677f">教学楼三层</text>
-          <text x="88" y="127" font-size="18" font-weight="700" fill="#173b5e">教学楼二层</text>
-          <text x="88" y="199" font-size="17" fill="#45677f">教学楼一层</text>
+          <!-- 教学楼三层剖面：楼层从下向上依次为一层、二层、三层 -->
+          <rect x="100" y="78" width="445" height="252" fill="#f8fbfd"
+                stroke="#315f83" stroke-width="3"/>
+          <rect x="103" y="81" width="439" height="80" fill="#f1f6f9"/>
+          <rect x="103" y="164" width="439" height="80" fill="#f9fbfc"/>
+          <rect x="103" y="247" width="439" height="80" fill="#f1f6f9"/>
 
-          <rect x="151" y="124" width="207" height="18" rx="4"
-                fill="{beam_color}" stroke="#795900" stroke-width="2"/>
-          <text x="218" y="119" font-size="17" font-weight="700" fill="#173b5e">B205梁</text>
-          <line x1="359" y1="133" x2="485" y2="105" stroke="{beam_color}" stroke-width="3"/>
-          <circle cx="359" cy="133" r="6" fill="{beam_color}"/>
-          <text x="450" y="82" font-size="16" fill="#526b7e">当前状态</text>
-          <text x="450" y="105" font-size="17" font-weight="700" fill="{beam_color}">{risk_level}</text>
+          <!-- 楼板和屋面 -->
+          <rect x="91" y="75" width="463" height="8" fill="#6f899d"/>
+          <rect x="91" y="158" width="463" height="8" fill="#8ea5b6"/>
+          <rect x="91" y="241" width="463" height="8" fill="#8ea5b6"/>
+          <rect x="85" y="327" width="475" height="10" fill="#58758c"/>
 
-          <circle cx="100" cy="258" r="7" fill="#2E7D32"/>
-          <text x="114" y="264" font-size="15" fill="#4b6172">绿色：安全区域</text>
-          <circle cx="265" cy="258" r="7" fill="#F4B400"/>
-          <text x="279" y="264" font-size="15" fill="#4b6172">黄色：关注区域</text>
-          <circle cx="430" cy="258" r="7" fill="#C62828"/>
-          <text x="444" y="264" font-size="15" fill="#4b6172">红色：风险区域</text>
+          <!-- 规则柱网，表达真实构件空间关系 -->
+          <rect x="101" y="80" width="10" height="249" fill="#a9bac7"/>
+          <rect x="210" y="80" width="10" height="249" fill="#a9bac7"/>
+          <rect x="322" y="80" width="10" height="249" fill="#a9bac7"/>
+          <rect x="434" y="80" width="10" height="249" fill="#a9bac7"/>
+          <rect x="533" y="80" width="10" height="249" fill="#a9bac7"/>
+
+          <!-- 各楼层空间标注，按真实高程从上到下排列 -->
+          <text x="27" y="124" font-size="18" font-weight="700" fill="#405b70">三层</text>
+          <text x="27" y="207" font-size="18" font-weight="700" fill="#173b5e">二层</text>
+          <text x="27" y="290" font-size="18" font-weight="700" fill="#405b70">一层</text>
+          <line x1="67" y1="118" x2="90" y2="118" stroke="#9aafbf" stroke-width="2"/>
+          <line x1="67" y1="201" x2="90" y2="201" stroke="#315f83" stroke-width="2"/>
+          <line x1="67" y1="284" x2="90" y2="284" stroke="#9aafbf" stroke-width="2"/>
+
+          <!-- 普通梁构件保持浅色 -->
+          <rect x="111" y="143" width="99" height="11" fill="#c3d0d9"/>
+          <rect x="220" y="143" width="102" height="11" fill="#c3d0d9"/>
+          <rect x="332" y="143" width="102" height="11" fill="#c3d0d9"/>
+          <rect x="444" y="143" width="89" height="11" fill="#c3d0d9"/>
+          <rect x="111" y="226" width="99" height="11" fill="#c3d0d9"/>
+          <rect x="444" y="226" width="89" height="11" fill="#c3d0d9"/>
+          <rect x="111" y="310" width="422" height="11" fill="#c3d0d9"/>
+
+          <!-- B205梁：位于二层柱网中，黄色高亮并显示选中边界 -->
+          <rect x="204" y="207" width="246" height="42" rx="4"
+                fill="none" stroke="#d89c00" stroke-width="2" stroke-dasharray="7 5"/>
+          <rect x="220" y="222" width="214" height="17" rx="3"
+                fill="#F4B400" stroke="#8b6800" stroke-width="2"/>
+          <text x="295" y="216" font-size="17" font-weight="800" fill="#5f4900">B205</text>
+          <circle cx="240" cy="230" r="4" fill="#fff4bf" stroke="#806000"/>
+          <circle cx="414" cy="230" r="4" fill="#fff4bf" stroke="#806000"/>
+
+          <!-- 构件定位引线与状态面板 -->
+          <polyline points="434,230 580,230 600,206" fill="none"
+                    stroke="#d89c00" stroke-width="3"/>
+          <circle cx="434" cy="230" r="6" fill="#F4B400" stroke="#806000"/>
+          <rect x="580" y="112" width="160" height="94" rx="6"
+                fill="#fff9e5" stroke="#d7b84a" stroke-width="2"/>
+          <text x="598" y="139" font-size="14" fill="#6a6041">SELECTED ELEMENT</text>
+          <text x="598" y="166" font-size="22" font-weight="800" fill="#173b5e">B205梁</text>
+          <circle cx="603" cy="187" r="6" fill="#F4B400"/>
+          <text x="617" y="193" font-size="16" font-weight="700" fill="#6b5300">黄色关注</text>
+
+          <!-- 风险状态图例 -->
+          <rect x="91" y="358" width="649" height="35" rx="5"
+                fill="#f7fafc" stroke="#d5e1ea"/>
+          <text x="108" y="381" font-size="14" font-weight="700" fill="#526a7c">状态图例</text>
+          <circle cx="205" cy="376" r="7" fill="#2E7D32"/>
+          <text x="220" y="382" font-size="14" fill="#405566">绿色：安全区域</text>
+          <circle cx="365" cy="376" r="7" fill="#F4B400"/>
+          <text x="380" y="382" font-size="14" fill="#405566">黄色：关注区域</text>
+          <circle cx="535" cy="376" r="7" fill="#C62828"/>
+          <text x="550" y="382" font-size="14" fill="#405566">红色：风险区域</text>
         </svg>
         </div>
         """,
         unsafe_allow_html=True,
     )
     twin_info_placeholder.info(
-        f"""
+        """
 **数字孪生构件信息**
 
 **构件编号：** B-2-05  
 **类型：** 钢筋混凝土梁  
 **位置：** 教学楼二层  
-**当前状态：** {risk_level}
+**状态：** 黄色关注  
+**健康指数：** 85%
 
-AI分析结果已关联至具体建筑位置与梁构件对象。
+该视图将AI分析结果定位到教学楼二层的具体梁构件。
         """
     )
 
